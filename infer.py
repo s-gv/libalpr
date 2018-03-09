@@ -20,6 +20,9 @@ plate_decoder = model.PlateDecoder()
 plate_encoder.load_state_dict(torch.load("params/encoder.dat"))
 plate_decoder.load_state_dict(torch.load("params/decoder.dat"))
 
+plate_encoder.eval()
+plate_decoder.eval()
+
 def find_plates(img, min_p=0.3, dbg=False):
     ''' Find number plates in the image
         img is a PIL image
@@ -43,7 +46,6 @@ def find_plates(img, min_p=0.3, dbg=False):
     _, f_c, f_h, f_w = f.size()
 
     if dbg:
-        print test_y_presence_img.size()
         im = Image.fromarray(test_y_presence_img.squeeze().cpu().data.numpy())
         print "Saving intermediate localization result..."
         im.save('tmp/op_loc.png')
