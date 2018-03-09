@@ -14,6 +14,8 @@ import torch.utils.data
 start_token = 36
 end_token = 37
 tokens = list("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ") + ["<START>", "<END>"]
+num_tokens = len(tokens)
+num_steps = 11
 
 class PlateDataset(torch.utils.data.Dataset):
     def __init__(self, font_fnames, bg_fnames):
@@ -44,12 +46,11 @@ class PlateDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         is_valid = random.choice([True, False])
-        y_is_present = 1 if is_valid else 0
+        y_is_present = 0 if is_valid else 1
 
-        n_ch = 10
+        n_ch = num_steps - 1
         labels = [end_token for _ in range(n_ch)]
         
-
         bg_color = random.randint(100, 255)
         txt_color = random.randint(0, 70)
 
