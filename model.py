@@ -9,7 +9,6 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 import data
 
-
 class PlateEncoder(nn.Module):
     def __init__(self):
         super(PlateEncoder, self).__init__()
@@ -30,10 +29,10 @@ class PlateEncoder(nn.Module):
         )
 
         self.presence_layers = torch.nn.Sequential( # Ip: 8x3
-            nn.Conv2d(self.f_c, 64, (self.f_h, self.f_w)), nn.ReLU(), # Op: 1x1
-            nn.Conv2d(64, 2, (1, 1)), # Op: 1x1
+            nn.Conv2d(self.f_c, 64, (1, 1)), nn.ReLU(), # Op: 8x3
+            nn.Conv2d(64, 32, (self.f_h, self.f_w)), nn.ReLU(), # Op: 1x1
+            nn.Conv2d(32, 2, (1, 1)), # Op: 1x1
         )
-        
 
     def forward(self, x):
         f = self.conv_layers(x)
