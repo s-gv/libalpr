@@ -2,6 +2,7 @@
 # Use of this source code is governed by the AGPLv3 license that can be
 # found in the LICENSE file.
 
+import Image
 import torch
 from torch import nn
 from torch.autograd import Variable
@@ -82,37 +83,54 @@ class PlateDecoder(nn.Module):
         
         return pad
 
-    def forward(self, x, h, f):
-        ''' x is a LongTensor of size (batch_size,)
-            h is a FloatTensor of size (batch_size, hidden_size)
-            f is a FloatTensor of size (batch_size, f_c, f_h, f_w)
+    def forward(self, x, f, h=None, teacher_forcing=False):
+        ''' f (feature map) is a FloatTensor of size (batch_size, f_c, f_h, f_w)
+            x is a LongTensor of size (batch_size, num_steps)
+            h is the hidden state got from this function or init_hidden()
+
+            returns (o, h_out) where
+            o is a FloatTensor or size (batch_size, num_steps, num_tokens)
+            h_out is the hidden state after all the steps are done
         '''
         batch_size, f_c, f_h, f_w = f.size()
+        _, num_steps = x.size()
         assert (f_c == self.f_c) and (f_h == self.f_h) and (f_w == self.f_w)
-
-        xe = self.embedding(x).unsqueeze(1) # (batch_size, 1, embedding_size)
-        o, h = self.decoder_rnn(xe, h)
-
-        hidden = h[0]
-        wh = self.h_attn_layer(hidden).view(batch_size, self.wf_c, 1, 1).expand(-1, -1, f_h, f_w)
 
         f_padded = torch.cat([f, self.pos_pad(batch_size, use_gpu=x.is_cuda)], dim=1)
         wf = self.f_attn_layer(f_padded)
 
-        a = self.attn_layer(torch.tanh(wh + wf)) # (batch_size, 1, f_h, f_w)
-        alpha = F.softmax(a.view(batch_size, -1), dim=1).view(batch_size, 1, f_h, f_w)
+        if h == None:
+            h = self.init_hidden(batch_size, use_gpu=f.is_cuda)
 
-        if self.is_dbg_attn and batch_size == 1:
-            # visualize attention
-            im = Image.fromarray((alpha*255).byte().squeeze(0).squeeze(0).cpu().data.numpy())
-            im.save('tmp/attn_%02d.png' % dbg)
-            #for j in range(f_h):
-                #print ', '.join("%.2f" % alpha[0, 0, j, i] for i in range(f_w))
+        ops = []
+        for i in range(num_steps):
+            xi = x[:, i]
+            if i > 0 and not teacher_forcing:
+                _, xi = torch.max(ops[-1], dim=1)
+            
+            xe = self.embedding(xi).unsqueeze(1) # (batch_size, 1, embedding_size)
+            o, h = self.decoder_rnn(xe, h)
 
-        u = (f * alpha).view(batch_size, f_c, -1).sum(2)
+            hidden = h[0]
+            wh = self.h_attn_layer(hidden).view(batch_size, self.wf_c, 1, 1).expand(-1, -1, f_h, f_w)
 
-        wo = self.rnn_output_layer(o.squeeze(1))
-        wu = self.img_output_layer(u)
+            a = self.attn_layer(torch.tanh(wh + wf)) # (batch_size, 1, f_h, f_w)
+            alpha = F.softmax(a.view(batch_size, -1), dim=1).view(batch_size, 1, f_h, f_w)
 
-        return (wo + wu), h
+            if self.is_dbg_attn and batch_size == 1:
+                # visualize attention
+                im = Image.fromarray((alpha*255).byte().squeeze(0).squeeze(0).cpu().data.numpy())
+                im.save('tmp/attn_%02d.png' % i)
+                #for j in range(f_h):
+                    #print ', '.join("%.2f" % alpha[0, 0, j, i] for i in range(f_w))
+
+            u = (f * alpha).view(batch_size, f_c, -1).sum(2)
+
+            wo = self.rnn_output_layer(o.squeeze(1))
+            wu = self.img_output_layer(u)
+
+            op = (wo + wu)
+            ops.append(op)
+
+        return torch.cat([op.view(batch_size, 1, self.num_tokens) for op in ops], dim=1), h
 

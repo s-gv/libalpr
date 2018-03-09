@@ -56,7 +56,7 @@ def main():
     test_plate_x = (test_plate_x.unsqueeze(0).unsqueeze(0).type(torch.FloatTensor) - 127) / 128.0
     test_plate_x = Variable(test_plate_x, requires_grad=False)
 
-    test_y_stim = Variable(torch.LongTensor([data.start_token]), requires_grad=False)
+    test_y_stim = Variable(torch.LongTensor([[data.start_token]*data.num_steps]), requires_grad=False)
 
     if use_gpu:
         plate_encoder.cuda()
@@ -74,7 +74,8 @@ def main():
     print('Training...')
     for it, (x, y_presence, y_stim, y_exp) in enumerate(data_loader):
         x = (x.unsqueeze(1).type(torch.FloatTensor) - 127) / 128.0
-        batch_size = x.size()[0]
+        batch_size, num_steps = y_exp.size()
+
         if use_gpu:
             x = x.cuda()
             y_presence = y_presence.cuda()
@@ -93,10 +94,9 @@ def main():
 
         f, y_presence_pred_scores = plate_encoder(x)
         loss = criterion(y_presence_pred_scores.squeeze(3).squeeze(2), y_presence)
-        h = plate_decoder.init_hidden(batch_size, use_gpu=use_gpu)
-        for i in range(data.num_steps):
-            y_pred_scores, h = plate_decoder(y_stim[:, i], h, f)
-            loss += criterion(y_pred_scores, y_exp[:, i])
+        y_pred_scores, _ = plate_decoder(y_stim, f, h=None, teacher_forcing=True)
+        for i in range(num_steps):
+            loss += criterion(y_pred_scores[:, i, :], y_exp[:, i])
         loss.backward()
 
         optimizer.step()
@@ -121,11 +121,10 @@ def main():
 
                 # test the plate recognizer on small image having one number plate
                 test_plate_f, _ = plate_encoder(test_plate_x)
-                test_plate_h = plate_decoder.init_hidden(1, use_gpu=use_gpu)
-                test_plate_o = test_y_stim
-                for step in range(data.num_steps):
-                    test_plate_o, test_plate_h = plate_decoder(test_plate_o, test_plate_h, test_plate_f)
-                    val, test_plate_o = torch.max(F.softmax(test_plate_o, dim=1), dim=1)
+                test_plate_y_pred_scores, _ = plate_decoder(test_y_stim, test_plate_f, h=None, teacher_forcing=False)
+                _, num_steps = test_y_stim.size()
+                for step in range(num_steps):
+                    val, test_plate_o = torch.max(F.softmax(test_plate_y_pred_scores[:, step, :], dim=1), dim=1)
                     idx = int(test_plate_o)
                     print "(%s, %.2f)\n" % (data.tokens[idx], val)
 
