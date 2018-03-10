@@ -48,11 +48,11 @@ def main():
         im.save('tmp/sample%d_%d.png' % (i, y))
 
     # Load an image to test periodically
-    test_big_x = torch.from_numpy(np.array(Image.open('samples/test_0.png').convert('L')))
+    test_big_x = torch.from_numpy(np.array(Image.open('samples/test.png').convert('L')))
     test_big_x = (test_big_x.unsqueeze(0).unsqueeze(0).type(torch.FloatTensor) - 127) / 128.0
     test_big_x = Variable(test_big_x, requires_grad=False)
 
-    test_plate_x = torch.from_numpy(np.array(Image.open('samples/plate_0.png').convert('L')))
+    test_plate_x = torch.from_numpy(np.array(Image.open('samples/plate.png').convert('L')))
     test_plate_x = (test_plate_x.unsqueeze(0).unsqueeze(0).type(torch.FloatTensor) - 127) / 128.0
     test_plate_x = Variable(test_plate_x, requires_grad=False)
 

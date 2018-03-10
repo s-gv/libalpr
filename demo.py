@@ -8,8 +8,8 @@ import infer
 
 def main():
     os.system("rm -f tmp/sample*.png tmp/op*.png")
-    img = Image.open("samples/test_0.png").convert('RGBA')
-    plates = infer.find_plates(img, dbg=False)
+    img = Image.open("samples/test.png").convert('RGBA')
+    plates = infer.find_plates(img, dbg=True)
     print plates
 
     draw = ImageDraw.Draw(img)

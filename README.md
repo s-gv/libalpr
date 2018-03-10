@@ -17,7 +17,7 @@ To train the model, the number plates are synthetically generated,
 but font files and background images are required. Specify their
 location in `train.py`.
 
-Requirements
+Dependencies
 ------------
 
 - Python 2.7
