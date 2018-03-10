@@ -16,8 +16,8 @@ How-to
 Try libalpr with the pre-trained model: `python demo.py`
 
 To train the model, a synthetic dataset of number plates is generated,
-but font files and background images are required. Specify their
-location in `train.py`.
+but font files and background images are required (location specified 
+in `train.py`).
 
 Dependencies
 ------------
