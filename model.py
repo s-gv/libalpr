@@ -13,6 +13,8 @@ class PlateEncoder(nn.Module):
     def __init__(self):
         super(PlateEncoder, self).__init__()
 
+        self.ip_w, self.ip_h = 94, 54 # Input window size
+        self.stride = 8
         self.f_c = 512 # num_channels in output feature map
         self.f_w, self.f_h = (8, 3) # Input window of size 94x54 reduced to 8x3 after convs
         

@@ -117,7 +117,7 @@ def main():
 
                 im = Image.fromarray(test_big_y_img.squeeze().cpu().data.numpy())
                 print("Saving sample output...\n")
-                im.save('tmp/big_op.png')
+                im.save('tmp/op_big.png')
 
                 # test the plate recognizer on small image having one number plate
                 test_plate_f, _ = plate_encoder(test_plate_x)

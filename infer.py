@@ -62,16 +62,17 @@ def find_plates(img, min_p=0.3, dbg=False):
             # max 10 plates per image
             break
         if xc < (f_w - plate_decoder.f_w) and yc < (f_h - plate_decoder.f_h/2):
-            if dbg:
-                print "\n", (xc, yc)
-                plate_img = img.crop((xc*8, yc*8, xc*8 + 94, yc*8 + 54))
-                plate_img.save("tmp/op_plate_%d.png" % i)
-            
             xstart, xstop = xc, xc + plate_decoder.f_w
             ystart, ystop = yc, yc + plate_decoder.f_h
             f_crop = f[:, :, ystart:ystop, xstart:xstop]
+            stride = plate_encoder.stride
 
-            plate = ((xc*8, yc*8), (xc*8 + 94, yc*8 + 54))
+            if dbg:
+                print "\n", (xc, yc)
+                plate_img = img.crop((xc*stride, yc*stride, xc*stride + plate_encoder.ip_w, yc*stride + plate_encoder.ip_h))
+                plate_img.save("tmp/op_plate_%d.png" % i)
+
+            plate = ((xc*stride, yc*stride), (xc*stride + plate_encoder.ip_w, yc*stride + plate_encoder.ip_h))
             f_crops.append(f_crop)
             plates.append(plate)
 
