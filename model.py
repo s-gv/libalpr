@@ -22,12 +22,16 @@ class PlateEncoder(nn.Module):
             nn.Conv2d(1, 32, (3, 3)), nn.ReLU(), # Op: 92x52
             nn.MaxPool2d((2, 2)), # Op: 46x26
             nn.Conv2d(32, 64, (3, 3)), nn.ReLU(), # Op: 44x24
+            nn.Conv2d(64, 256, (1, 1)), nn.ReLU(),
             nn.MaxPool2d((2, 2)), # Op: 22x12
+            nn.Conv2d(256, 64, (1, 1)), nn.ReLU(),
             nn.Conv2d(64, 128, (3, 3)), nn.ReLU(), # Op: 20x10
+            nn.Conv2d(128, 512, (1, 1)), nn.ReLU(),
             nn.MaxPool2d((2, 2)), # Op: 10x5
+            nn.Conv2d(512, 128, (1, 1)), nn.ReLU(),
             nn.Conv2d(128, 256, (3, 3)), nn.ReLU(), # Op: 8x3
             nn.BatchNorm2d(256),
-            nn.Conv2d(256, self.f_c, (1, 1)), # Op: 8x3
+            nn.Conv2d(256, self.f_c, (1, 1)), nn.ReLU(), # Op: 8x3
         )
 
         self.presence_layers = torch.nn.Sequential( # Ip: 8x3
